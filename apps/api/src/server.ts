@@ -1,28 +1,18 @@
 import { serve } from "@hono/node-server";
 import type { AddressInfo } from "node:net";
-import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
-import { Hono } from "hono";
-import type { HealthResponse } from "@rpanel/shared";
+import { createApp } from "./app.js";
+import { openDatabase } from "./db.js";
 
-export type ServerOptions = { port: number; databasePath: string; host?: string };
+export type ServerOptions = { port: number; databasePath: string; host?: string; now?: () => number };
 export type RunningServer = { url: string; close: () => Promise<void> };
 
 export async function startServer(options: ServerOptions): Promise<RunningServer> {
-  mkdirSync(dirname(options.databasePath), { recursive: true });
-  const database = new DatabaseSync(options.databasePath);
-
-  const app = new Hono();
-  app.get("/api/health", (c) => {
-    database.prepare("SELECT 1").get();
-    const body: HealthResponse = { status: "ok", database: "ok" };
-    return c.json(body);
-  });
+  const database = openDatabase(options.databasePath);
+  const app = createApp({ database, now: options.now ?? Date.now });
 
   const host = options.host ?? "127.0.0.1";
   const server = await new Promise<ReturnType<typeof serve>>((resolve) => {
-    const s = serve({ fetch: app.fetch, port: options.port, hostname: host }, () => resolve(s));
+    const listening = serve({ fetch: app.fetch, port: options.port, hostname: host }, () => resolve(listening));
   });
   const { port } = server.address() as AddressInfo;
 

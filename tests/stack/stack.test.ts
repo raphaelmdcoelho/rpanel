@@ -27,6 +27,16 @@ describe("running stack, seen from outside", () => {
     expect(await res.text()).toContain("rpanel");
   });
 
+  it("sets security headers on the web shell and on API responses", async () => {
+    for (const path of ["/", "/api/health"]) {
+      const res = await fetch(`${base}${path}`);
+      expect(res.headers.get("x-content-type-options"), path).toBe("nosniff");
+      expect(res.headers.get("x-frame-options"), path).toBe("DENY");
+      expect(res.headers.get("referrer-policy"), path).toBe("no-referrer");
+      expect(res.headers.get("content-security-policy"), path).toContain("frame-ancestors 'none'");
+    }
+  });
+
   it("does not expose the API port directly", async () => {
     const proxyPort = Number(new URL(base).port || 80);
     expect(await portIsOpen(proxyPort)).toBe(true);

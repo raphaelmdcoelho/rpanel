@@ -8,6 +8,12 @@ services:
       DATABASE_PATH: /data/rpanel.sqlite
     volumes:
       - rpanel-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
     expose:
       - "3000"
 
@@ -17,9 +23,10 @@ services:
       dockerfile: deploy/nginx/Dockerfile
     restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
-      - "80:80"
+      - "${RPANEL_PORT:-80}:80"
 
 volumes:
   rpanel-data:
