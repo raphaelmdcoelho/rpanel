@@ -1,0 +1,22 @@
+{
+  "name": "rpanel",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @rpanel/shared && npm run build -w @rpanel/api && npm run build -w @rpanel/web",
+    "typecheck": "npm run build -w @rpanel/shared && npm run typecheck -w @rpanel/api && npm run typecheck -w @rpanel/web",
+    "test": "npm test -w @rpanel/api",
+    "test:stack": "vitest run --config tests/stack/vitest.config.ts",
+    "test:e2e": "playwright test"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  }
+}
