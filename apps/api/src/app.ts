@@ -3,6 +3,7 @@ import { secureHeaders } from "hono/secure-headers";
 import type { HealthResponse } from "@rpanel/shared";
 import { createAuth } from "./auth.js";
 import type { Database } from "./db.js";
+import { createProjectRoutes } from "./projects.js";
 
 export type AppDependencies = { database: Database; now: () => number };
 
@@ -30,6 +31,7 @@ export function createApp({ database, now }: AppDependencies): Hono {
     return c.json(body);
   });
   app.route("/", auth.routes);
+  app.route("/", createProjectRoutes(database, now, auth.requireSession));
 
   return app;
 }
