@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import type { SessionInfo } from "@rpanel/shared";
+import type { Project, SessionInfo } from "@rpanel/shared";
 import { api, ApiError, rememberCsrfToken } from "./api";
 import "./App.css";
 
@@ -49,6 +49,50 @@ function CredentialsForm(props: { title: string; submitLabel: string; onSubmit: 
   );
 }
 
+function ProjectsSection() {
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.projects().then(setProjects).catch(() => setError("Could not load Projects."));
+  }, []);
+
+  async function create(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    try {
+      const project = await api.createProject(name);
+      setProjects((current) => [project, ...(current ?? [])]);
+      setName("");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+    }
+  }
+
+  return (
+    <section>
+      <h2>Projects</h2>
+      <form onSubmit={create}>
+        <label>
+          Project name
+          <input value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <button type="submit">Create project</button>
+      </form>
+      {error && <p role="alert">{error}</p>}
+      {projects?.length === 0 && <p>No Projects yet</p>}
+      {projects && projects.length > 0 && (
+        <ul>
+          {projects.map((project) => (
+            <li key={project.id}>{project.name}</li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function App() {
   const [view, setView] = useState<View>({ kind: "loading" });
   const [apiStatus, setApiStatus] = useState<"checking" | "ok" | "down">("checking");
@@ -95,6 +139,7 @@ export function App() {
           <button type="button" onClick={logout}>
             Log out
           </button>
+          <ProjectsSection />
         </section>
       )}
       <p data-testid="api-status">API: {apiStatus}</p>

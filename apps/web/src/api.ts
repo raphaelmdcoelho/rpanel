@@ -1,4 +1,4 @@
-import type { SessionInfo } from "@rpanel/shared";
+import type { Project, SessionInfo } from "@rpanel/shared";
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -29,4 +29,6 @@ export const api = {
   setup: (email: string, password: string) => request<SessionInfo>("POST", "/api/setup", { email, password }),
   login: (email: string, password: string) => request<SessionInfo>("POST", "/api/login", { email, password }),
   logout: () => request<void>("POST", "/api/logout"),
+  projects: () => request<{ projects: Project[] }>("GET", "/api/projects").then((data) => data.projects),
+  createProject: (name: string) => request<Project>("POST", "/api/projects", { name }),
 };
